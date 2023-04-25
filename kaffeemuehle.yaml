@@ -50,10 +50,19 @@ globals:
      type: int
      restore_value: no
      initial_value: '0'
-   - id: grind_time
-     type: int 
-     restore_value: yes
-     initial_value: 4*1000
+
+number:
+  - platform: template
+    id: grind_time_sec
+    name: "Mahlzeit"
+    restore_value: true
+    optimistic: true
+    initial_value: 4.0
+    min_value: 0.0
+    max_value: 60.0
+    step: 0.1
+    unit_of_measurement: "s"
+    icon: "mdi:timer-outline"
 
 interval:
   - interval: 1ms
@@ -88,9 +97,9 @@ display:
     update_interval: 0.1s    
     lambda: |-        
       if(id(grind).state == 1) {
-        it.printf(21, 21, id(roboto), "Mahlen %.1fs", (double(id(grind_time)) - double(id(grind_run_time))) / 1000);
+        it.printf(21, 21, id(roboto), "Mahlzeit: %.1fs", max(id(grind_time_sec).state - double(id(grind_run_time)) / 1000.0 , 0.0 ));
       }else{
-        it.printf(21, 21, id(roboto), "Mahlzeit: %.1fs", double(id(grind_time)) / 1000);
+        it.printf(21, 21, id(roboto), "Mahlzeit: %.1fs", double(id(grind_time_sec).state));
       }        
 
 switch:
@@ -105,7 +114,7 @@ switch:
       - lambda: |-
           id(grind_start_time) = millis();
       - switch.turn_on: grind
-      - delay: !lambda "return id(grind_time);"
+      - delay: !lambda "return id(grind_time_sec).state * 1000;"
       - lambda: |-
           id(grind_start_time) = 0;
       - switch.turn_off: grind
@@ -125,4 +134,4 @@ binary_sensor:
         - switch.turn_on: grind_timer
     # on_release:
     #   then:
-    #     - switch.turn_off: grind_timer
+    #     - switch.turn_off: grind_time_secr
